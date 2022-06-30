@@ -1,0 +1,46 @@
+# Node.js
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: 'Deploy'
+    Contents: '*.json'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '10.x'
+  displayName: 'Install Node.js'
+
+- script: |
+    npm install
+    npm run build
+  displayName: 'npm install and build'
+
+- task: Npm@1
+  inputs:
+    command: 'custom'
+    customRegistry: 'useFeed'
+    customFeed: 'a068e373-065b-4ce5-b1ce-740d5a2c66c5'
+
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.SourcesDirectory)'
+    includeRootFolder: true
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/Sample_Nodejs-$(Build.BuildId).zip'
+    replaceExistingArchive: true
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
